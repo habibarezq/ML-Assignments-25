@@ -1,7 +1,6 @@
 __pycache__/
 *.zip
 *.pdf
-*.csv
 *.xlsx
 *.pkl
 .venv/
