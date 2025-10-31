@@ -178,7 +178,7 @@ class SoftmaxRegression:
 
       print(f"Test Loss: {test_loss:.4f}")
       print(f"Test Accuracy: {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
-      return test_predictions, y_pred_test
+      return test_predictions, y_pred_test,test_loss,test_accuracy
 
   """### Confusion Matrix"""
   def plot_confusion_matrix(self, y_test, test_predictions, class_labels=None):
