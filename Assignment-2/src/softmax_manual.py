@@ -198,4 +198,15 @@ class SoftmaxRegression:
       plt.xlabel('Predicted Label', fontsize=12)
       plt.tight_layout()
       plt.show()
-
+      
+  def per_class_accuracy(self,y_test,test_predictions,class_labels=None):
+      y_test_np=y_test.np()
+      preds_np=test_predictions.np()
+      
+      cm= confusion_matrix(y_test_np,preds_np)
+      per_class_accuracy= cm.diagonal() / cm.sum(axis=1)
+      
+      print("\nPer-Class Accuracy:")
+      for i, acc in enumerate(per_class_accuracy):
+        label = class_labels[i] if class_labels else i
+        print(f"Class {label}: {acc*100:.2f}%")
