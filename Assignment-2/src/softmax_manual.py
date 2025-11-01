@@ -200,8 +200,8 @@ class SoftmaxRegression:
       plt.show()
       
   def per_class_accuracy(self,y_test,test_predictions,class_labels=None):
-      y_test_np=y_test.np()
-      preds_np=test_predictions.np()
+      y_test_np=y_test.numpy()
+      preds_np=test_predictions.numpy()
       
       cm= confusion_matrix(y_test_np,preds_np)
       per_class_accuracy= cm.diagonal() / cm.sum(axis=1)
