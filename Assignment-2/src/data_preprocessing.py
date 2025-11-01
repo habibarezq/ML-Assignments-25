@@ -5,13 +5,6 @@ from sklearn.model_selection import train_test_split
 
 class MNISTDataLoader:
     def __init__(self, batch_size=64, flatten=True, binary=False, digits=(0, 1), seed=42):
-        """
-        batch_size: batch size for dataloaders
-        flatten: whether to flatten 28x28 images into vectors
-        binary: if True, filter only the digits specified in `digits`
-        digits: tuple of digits to include in binary classification
-        seed: random seed for reproducibility
-        """
         self.batch_size = batch_size
         self.flatten = flatten
         self.binary = binary
