@@ -43,6 +43,11 @@ class MNISTDataLoader:
             X_train = X_train.reshape(-1, 28*28)
             X_val = X_val.reshape(-1, 28*28)
             X_test = X_test.reshape(-1, 28*28)
+        else:
+            # add a channel dimension for cnn
+            X_train = X_train.unsqueeze(1)  
+            X_val = X_val.unsqueeze(1)     
+            X_test = X_test.unsqueeze(1)
 
         # Store splits
         self.X_train, self.X_val, self.X_test = X_train, X_val, X_test
