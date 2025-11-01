@@ -153,3 +153,74 @@ def train_multiple_times(model_class, train_loader, val_loader, epochs=10, learn
     val_loss_diff = np.abs(np.diff(mean_val_loss))
     convergence_epoch = np.argmin(val_loss_diff) + 1
     print(f"Convergence epoch: {convergence_epoch}")
+
+
+## Part D2 (NN With dropout layers)
+class NNDropout(nn.Module):
+    def __init__(self,dropout_rate=0.5):
+        super().__init__()
+        # First Hidden layer
+        self.fc1 = nn.Linear(28*28,256)
+        self.dropout1=nn.Dropout(dropout_rate)
+        # 2nd hidden layer
+        self.fc2=nn.Linear(256,128)
+        self.dropout2=nn.Dropout(dropout_rate)
+        #output layer
+        self.fc3=nn.Linear(128,10)
+        
+    def forward(self,x): # x should be already flattened
+        x = F.relu(self.fc1(x)) # fc -> relu -> dropout
+        x = self.dropout1(x)
+        
+        x = F.relu(self.fc2(x))
+        x = self.dropout2(x)
+        
+        x = self.fc3(x)
+        return x
+    
+## Part D2: NN with Batch Normalization
+class NNBatchNormalized(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        self.fc1=nn.Linear(28*28,256)
+        self.bn1=nn.BatchNorm1d(256)
+        
+        self.fc2=nn.Linear(256,128)
+        self.bn2=nn.BatchNorm1d(128)
+        
+        self.fc3=nn.Linear(128,10)
+    
+    def forward(self,x):
+        x= self.bn1(F.relu(self.fc1(x)))
+        x= self.bn2(F.relu(self.fc2(x)))
+        x=self.fc3(x)
+        return x
+    
+# NN with dropout and batch normalization (i just combined both)
+class NNDropoutBatchNormalized(nn.Module):
+    def __init__(self, dropout_rate=0.3):
+        super().__init__()
+        self.fc1 = nn.Linear(28*28, 256)
+        self.bn1 = nn.BatchNorm1d(256)
+        self.dropout1 = nn.Dropout(dropout_rate)
+        
+        self.fc2 = nn.Linear(256, 128)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.dropout2 = nn.Dropout(dropout_rate)
+        
+        self.fc3 = nn.Linear(128, 10)
+    
+    def forward(self, x):
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = self.bn1(x)
+        x = self.dropout1(x)
+        
+        x = F.relu(self.fc2(x))
+        x = self.bn2(x)
+        x = self.dropout2(x)
+        
+        x = self.fc3(x)
+        return x
+        
