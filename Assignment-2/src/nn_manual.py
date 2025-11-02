@@ -34,7 +34,7 @@ class CustomFeedforwardNN(nn.Module):
         x = self.fc3(x)
         return x  # output tensor of size (batch size, 10)
 
-class FFN_dynamic(nn.Module): # for hidden layers > 2
+class FFN_dynamic(nn.Module): # for hidden layers > 2 (used in part c.2)
     def __init__(self, input_dim=784, hidden_sizes=[128,64], output_dim=10):
         super().__init__()
         layers = []
