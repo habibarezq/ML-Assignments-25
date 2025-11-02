@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
 class CustomFeedforwardNN(nn.Module):
-  # 1st hidden layer: 128 neurons, 2nd hidden layer: 64 neurons
+# 1st hidden layer: 128 neurons, 2nd hidden layer: 64 neurons
     def __init__(self, input_size=784, hidden1_size=128, hidden2_size=64, output_size=10):
 
         super(CustomFeedforwardNN, self).__init__()
@@ -120,9 +120,9 @@ def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0
         train_accuracies.append(train_acc)
         val_accuracies.append(val_acc)
         print(f"Epoch {epoch+1}/{epochs} "
-              f"Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f} "
-              f"Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}"
-              f"Grad Noise: {grad_noise:.6f} Norm: {grad_norm:.4f}")
+            f"Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f} "
+            f"Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}"
+            f"Grad Noise: {grad_noise:.6f} Norm: {grad_norm:.4f}")
     return train_losses, val_losses, train_accuracies, val_accuracies, grad_noise_per_epoch
 
 # run the training process multiple times according to runs variable
@@ -137,7 +137,7 @@ def train_multiple_times(model_class, train_loader, val_loader, epochs=10, learn
         # independent model for each training run
         model = model_class()
         # collect training and validation losses and accuracies each run
-        train_losses, val_losses, train_accuracies, val_accuracies = train_model_once(
+        train_losses, val_losses, train_accuracies, val_accuracies,_ = train_model_once(
             model, train_loader, val_loader, epochs, learning_rate, device)
         all_train_losses.append(train_losses)
         all_val_losses.append(val_losses)
