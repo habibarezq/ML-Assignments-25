@@ -34,6 +34,23 @@ class CustomFeedforwardNN(nn.Module):
         x = self.fc3(x)
         return x  # output tensor of size (batch size, 10)
 
+class FFN_dynamic(nn.Module): # for hidden layers > 2
+    def __init__(self, input_dim=784, hidden_sizes=[128,64], output_dim=10):
+        super().__init__()
+        layers = []
+        prev = input_dim
+        for h in hidden_sizes:
+            layers.append(nn.Linear(prev, h))
+            layers.append(nn.ReLU())
+            prev = h
+        layers.append(nn.Linear(prev, output_dim))
+        self.net = nn.Sequential(*layers)
+        for m in self.net:
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight); nn.init.zeros_(m.bias)
+    def forward(self, x):
+        return self.net(x)
+    
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0.01, device=device):
