@@ -53,7 +53,7 @@ class FFN_dynamic(nn.Module): # for hidden layers > 2 (used in part c.2)
     
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0.01, device=device):
+def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0.01, device=device,grad_noise=False):
     model.to(device) # transfer to chosen device
     criterion = nn.CrossEntropyLoss()  # cross-entropy
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)  # SGD is used to optimize parameters
@@ -79,23 +79,25 @@ def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0
             outputs = model(inputs) # forward pass
             loss = criterion(outputs, labels) # calculate loss comparing outputs to labels
             loss.backward()         # compute gradients via backpropagation
-            grad_vector = torch.cat([
-                p.grad.detach().flatten()
-                for p in model.parameters() if p.grad is not None
-            ])
-            batch_grads.append(grad_vector.cpu())
+            if grad_noise:
+                grad_vector = torch.cat([
+                    p.grad.detach().flatten()
+                    for p in model.parameters() if p.grad is not None
+                ])
+                batch_grads.append(grad_vector.cpu())
             optimizer.step()        # update model weights
             running_loss += loss.item() * inputs.size(0) # accumulate total loss (weighted by batch size)
             _, predicted = torch.max(outputs, 1) # calculate predicted class labels
             total += labels.size(0) # total samples processed
             correct += (predicted == labels).sum().item() # calculate correct predictions
             # --- Compute gradient noise statistics ---
-        grads = torch.stack(batch_grads)
-        grad_mean = grads.mean(dim=0)
-        grad_var = grads.var(dim=0)
-        grad_noise = grad_var.mean().item()  # average variance as a scalar
-        grad_norm = grads.norm(dim=1).mean().item()  # mean norm of per-batch grads
-        grad_noise_per_epoch.append({'noise': grad_noise, 'grad_norm': grad_norm})
+        if grad_noise:
+            grads = torch.stack(batch_grads)
+            grad_mean = grads.mean(dim=0)
+            grad_var = grads.var(dim=0)
+            grad_noise = grad_var.mean().item()  # average variance as a scalar
+            grad_norm = grads.norm(dim=1).mean().item()  # mean norm of per-batch grads
+            grad_noise_per_epoch.append({'noise': grad_noise, 'grad_norm': grad_norm})
         # compute training 
         train_loss = running_loss / total
         train_acc = correct / total
@@ -119,10 +121,15 @@ def train_model_once(model, train_loader, val_loader, epochs=10, learning_rate=0
         val_losses.append(val_loss)
         train_accuracies.append(train_acc)
         val_accuracies.append(val_acc)
-        print(f"Epoch {epoch+1}/{epochs} "
+        if grad_noise:
+            print(f"Epoch {epoch+1}/{epochs} "
             f"Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f} "
             f"Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}"
-            f"Grad Noise: {grad_noise:.6f} Norm: {grad_norm:.4f}")
+            f"Grad Noise: {grad_noise:.6f} Norm: {grad_norm:.4f}") # pyright: ignore[reportPossiblyUnboundVariable]
+        else:
+            print(f"Epoch {epoch+1}/{epochs} "
+            f"Train Loss: {train_loss:.4f} Train Acc: {train_acc:.4f} "
+            f"Val Loss: {val_loss:.4f} Val Acc: {val_acc:.4f}")
     return train_losses, val_losses, train_accuracies, val_accuracies, grad_noise_per_epoch
 
 # run the training process multiple times according to runs variable
