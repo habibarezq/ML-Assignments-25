@@ -97,7 +97,7 @@ class DecisionTreeClassifier:
         feature_index,threshold,left_idx,right_idx,best_info_gain=self._best_split(X,y)
         
         # if no valid split, make leaf node
-        if feature_index is None:
+        if feature_index is None or best_info_gain <=0:
             leaf=Node()
             leaf.label=self._majority_class(y)
             leaf.samples_count=n_samples
