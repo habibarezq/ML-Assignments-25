@@ -127,6 +127,17 @@ class DecisionTreeClassifier:
         self.root=self._build_tree(X,y,depth=0)
         
     def _predict_single(self,x): #private function only called by the predict
-        pass
+        node=self.root
+        if node is not None:
+            while node.left is not None and node.right is not None:
+                f=node.feature_index
+                if x[f] <= node.threshold:
+                    node=node.left
+                else:
+                    node=node.right
+            return node.label
     def predict(self,X): # uses the built tree
-        pass
+        predictions=[]
+        for i in range(len(X)):
+            predictions.append(self._predict_single(X[i]))
+        return np.array(predictions)
