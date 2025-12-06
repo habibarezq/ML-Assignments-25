@@ -1,4 +1,4 @@
-# gaussian_model.py
+
 
 import numpy as np
 from numpy.linalg import slogdet, inv
