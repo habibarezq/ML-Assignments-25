@@ -10,24 +10,24 @@ class GaussianGenerativeModel:
     def fit(self, X, y):
         #hena bn define each class k in {0, 1, …, 9}
         self.classes = np.unique(y)
-        self.K = len(self.classes)
-        self.d = X.shape[1]
+        self.K_Mean = len(self.classes)
+        self.dim = X.shape[1]
         #  N(x ; μ_k, Σ)
         N = X.shape[0]
 
         # -> PRIORS : BNGEEB probability kol digit ll training set
-        self.pi = np.zeros(self.K)
+        self.pi = np.zeros(self.K_Mean)
         for k in self.classes:
             self.pi[k] = np.sum(y == k) / N
 
         # -> MEANS : BNGEEB ll 64_ D el mean 
-        self.mu = np.zeros((self.K, self.d))
+        self.mu = np.zeros((self.K_Mean, self.dim))
         for k in self.classes:
             self.mu[k] = np.mean(X[y == k], axis=0)
 
         # -> SHARED COVARIANCE : bngeeb el average ll points 
         #Accumulate (x_i – μ_{y_i}) (x_i – μ_{y_i})^T
-        S = np.zeros((self.d, self.d))
+        S = np.zeros((self.dim, self.dim))
         for i in range(N):
             k = y[i]
             diff = (X[i] - self.mu[k]).reshape(-1, 1)
@@ -36,7 +36,7 @@ class GaussianGenerativeModel:
 
         # -> REGULARIZATION : bn classify new points by inverse Σ−1 w log determination log∣Σ∣
         # Σ_λ = Σ + λ I
-        self.Sigma = S + self.lambda_reg * np.eye(self.d)
+        self.Sigma = S + self.lambda_reg * np.eye(self.dim)
         self.Sigma_inv = inv(self.Sigma)
         sign, logdet = slogdet(self.Sigma)
         self.logdetSigma = logdet
@@ -45,7 +45,7 @@ class GaussianGenerativeModel:
         # log p(y = k | x) ∝ log π_k + log N(x ; μ_k, Σ_λ) for prediction
         diff = (x - self.mu[k])
         t1 = -0.5 * (diff.T @ self.Sigma_inv @ diff)
-        t2 = -0.5 * (self.d * np.log(2 * np.pi) + self.logdetSigma)
+        t2 = -0.5 * (self.dim * np.log(2 * np.pi) + self.logdetSigma)
         return t1 + t2
 
     def predict(self, X):
@@ -53,8 +53,8 @@ class GaussianGenerativeModel:
         for x in X:
             scores = []
             for k in self.classes:
-                score = np.log(self.pi[k]) + self._log_gaussian(x, k)
-                scores.append(score)
+                score_in_K = np.log(self.pi[k]) + self._log_gaussian(x, k)
+                scores.append(score_in_K)
             preds.append(np.argmax(scores))
         return np.array(preds)
 
