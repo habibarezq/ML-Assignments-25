@@ -192,3 +192,43 @@ class GMM:
     
     def predict_proba(self, X):
         return self._e_step(X)
+    
+    def bic(self,X): # Bayesian Information Criterion
+        N,D=X.shape
+        K=self.n_components
+        # means: K * D
+        # weights: K-1
+        n_params=K * D + (K-1)
+        
+        # covariance count depends on the type
+        if self.cov_type==CovarianceType.FULL:
+            n_params+=K*D*(D+1)//2
+        elif self.cov_type==CovarianceType.TIED:
+            n_params+=D*(D+1)//2
+        elif self.cov_type==CovarianceType.DIAGONAL:
+            n_params+=K*D # (diagonal elements only)
+        elif self.cov_type==CovarianceType.SPHERICAL:
+            n_params+=K
+            
+        log_likelihood=self.log_likelihoods[-1]
+        return -2*log_likelihood+np.log(N)*n_params
+    
+    def aic(self,X): # kaike Information Criterion (AIC)
+        N,D=X.shape
+        K=self.n_components
+        # means: K * D
+        # weights: K-1
+        n_params=K * D + (K-1)
+        
+        # covariance count depends on the type
+        if self.cov_type==CovarianceType.FULL:
+            n_params+=K*D*(D+1)//2
+        elif self.cov_type==CovarianceType.TIED:
+            n_params+=D*(D+1)//2
+        elif self.cov_type==CovarianceType.DIAGONAL:
+            n_params+=K*D # (diagonal elements only)
+        elif self.cov_type==CovarianceType.SPHERICAL:
+            n_params+=K
+            
+        log_likelihood=self.log_likelihoods[-1]
+        return -2*log_likelihood+2*n_params
