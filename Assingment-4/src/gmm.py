@@ -133,16 +133,7 @@ class GMM:
         K = self.n_components
     
         covariances = np.zeros((K, n_features, n_features))  # store all covs
-        
-        # for k in range(K): LOOP VERSION IS CORRECT BUT SLOW O(n*k)
-        #     cov_k = np.zeros((n_features, n_features))  # reset per component
-        #     for i in range(X.shape[0]):
-        #         diff = (X[i] - self.means[k]).reshape(-1, 1)  # column vector D x 1
-        #         cov_k += responsibilities[i, k] * (diff @ diff.T)
-            
-        #     cov_k /= N_k[k]  # normalize by total responsibility
-        #     cov_k += self.reg_covar * np.eye(n_features)  # regularization
-        #     covariances[k] = cov_k  # store for component k
+
         
         # Vectorized Form
         diffs = X[np.newaxis, :, :] - self.means[:, np.newaxis, :]  # type: ignore # shape (K, N, D)
@@ -153,10 +144,16 @@ class GMM:
         
         if self.cov_type == CovarianceType.TIED:
             return covariances.mean(axis=0)  # average across components
+        
         elif self.cov_type == CovarianceType.DIAGONAL:
-            return np.array([np.diag(np.diag(cov)) for cov in covariances])
+            diag_covs = np.array([np.diag(cov) for cov in covariances])
+            diag_covs = np.maximum(diag_covs, self.reg_covar)
+            return diag_covs  # Shape: (K, D)
+        
         elif self.cov_type == CovarianceType.SPHERICAL:
-            return np.array([np.mean(np.diag(cov)) for cov in covariances])
+            spherical_vars= np.array([np.mean(np.diag(cov)) for cov in covariances])
+            spherical_vars = np.maximum(spherical_vars, self.reg_covar)
+            return spherical_vars
         else:  # FULL
             return covariances
     
