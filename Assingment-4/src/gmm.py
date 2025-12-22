@@ -22,7 +22,7 @@ class GMM:
         
         # Parameters ( initialized in fit by calling init_params)
         self.weights: np.ndarray | None=None # weights π_k
-        self.means:np.ndarray | None=None # μ_k
+        self.means: np.ndarray | None=None # μ_k
         self.covariances: np.ndarray | None=None # Σ_k
         
     def _init_params(self,X):
@@ -116,11 +116,47 @@ class GMM:
         return responsibilities
     
     def _m_step(self,X,responsibilities):
-        ...
-    def _compute_covariance(self,X,responsibilities,mean):
-        ...
+        # responsiiblities shape(N,K)
+        n_samples=X.shape[0]
+        N_k=responsibilities.sum(axis=0) #shape(K,)
+        self.weights=N_k/n_samples
+        self.means=(responsibilities.T @ X)/N_k[:,np.newaxis] #shape should be (K,D)
+        # [:, np.newaxis] converts (K,) → (K, 1)
+        self.covariances=self._compute_covariance(X,responsibilities,N_k)
+    def _compute_covariance(self,X,responsibilities,N_k):
+        n_samples, n_features = X.shape
+        K = self.n_components
+    
+        covariances = np.zeros((K, n_features, n_features))  # store all covs
+        
+        # for k in range(K): LOOP VERSION IS CORRECT BUT SLOW O(n*k)
+        #     cov_k = np.zeros((n_features, n_features))  # reset per component
+        #     for i in range(X.shape[0]):
+        #         diff = (X[i] - self.means[k]).reshape(-1, 1)  # column vector D x 1
+        #         cov_k += responsibilities[i, k] * (diff @ diff.T)
+            
+        #     cov_k /= N_k[k]  # normalize by total responsibility
+        #     cov_k += self.reg_covar * np.eye(n_features)  # regularization
+        #     covariances[k] = cov_k  # store for component k
+        
+        # Vectorized Form
+        diffs = X[np.newaxis, :, :] - self.means[:, np.newaxis, :]  # shape (K, N, D)
+        resp_reshaped = responsibilities.T[:, :, np.newaxis]  # shape (K, N, 1)
+        weighted_diffs = diffs * resp_reshaped                 # shape (K, N, D)
+        for k in range(K):
+            covariances[k] = weighted_diffs[k].T @ diffs[k] / N_k[k] + self.reg_covar * np.eye(D)
+        return covariances
+    
     def _compute_log_likelihood(self, X):
-        ...
+        n_samples = X.shape[0]
+        log_likelihood = 0
+        for i in range(n_samples):
+            tmp = 0
+            for k in range(self.n_components):
+                tmp += self.weights[k] * self._multivariate_gaussian(X[i], self.means[k], self.covariances[k])
+            log_likelihood += np.log(tmp)
+        return log_likelihood
+
     def fit(self,X):
         self._init_params(X)
     def predict(self,X):
