@@ -38,22 +38,22 @@ class GMM:
         
         if self.cov_type== CovarianceType.FULL: # each component has full cov matrix
             self.covariances=np.array([np.cov(X,rowvar=False)+self.reg_covar * np.eye(n_features) for _ in range(K)]) # np.eye --> identity matrix
-        
+            # shape: (K, D, D)
         elif self.cov_type ==CovarianceType.TIED: # all components share one cov matrix
             self.covariances=np.cov(X,rowvar=False)+self.reg_covar* np.eye(n_features)
-        
+            # shape: (D, D)
         elif self.cov_type ==CovarianceType.DIAGONAL: # diagonal covariance per component
             variance=np.var(X,axis=0) +self.reg_covar
-            self.covariances=np.tile(variance,(K,1)) # shape K x d
+            self.covariances=np.tile(variance,(K,1)) # shape K x D x D but using the tile K x D
             
         elif self.cov_type==CovarianceType.SPHERICAL: # single variance per component
             variance=np.mean(np.var(X,axis=0))+self.reg_covar
-            self.covariances=np.full(K,variance)
+            self.covariances=np.full(K,variance) # shape: (K,)
         
     def _multivariate_gaussian(self,x,mean,cov):
         D=x.shape[0]
         
-        if self.cov_type==CovarianceType.FULL:
+        if self.cov_type == CovarianceType.TIED or self.cov_type == CovarianceType.FULL:
             determinant_cov=np.linalg.det(cov)
             cov_inverse=np.linalg.inv(cov)
             constant=np.pow(2*np.pi,D/2) * np.pow(determinant_cov,0.5)
@@ -79,7 +79,7 @@ class GMM:
 
     def _log_multivariate_gaussian(self, x, mean, cov):
         D = x.shape[0]
-        if self.cov_type==CovarianceType.FULL:
+        if self.cov_type == CovarianceType.TIED or self.cov_type == CovarianceType.FULL:
             diff = x - mean
             cov_inverse = np.linalg.inv(cov)
             determinant_cov = np.linalg.det(cov)
@@ -105,7 +105,12 @@ class GMM:
         for i in range(n_samples):
             log_probs=np.zeros(self.n_components) # log probabilites per sample i
             for k in range(self.n_components):
-                log_probs[k]=(np.log(self.weights[k]) + self._log_multivariate_gaussian(X[i],self.means[k],self.covariances[k])) # type: ignore
+                if self.cov_type == CovarianceType.TIED:
+                    cov = self.covariances  # Use the shared covariance matrix
+                else:
+                    cov = self.covariances[k]  # type: ignore # Use component-specific covariance
+                
+                log_probs[k]=(np.log(self.weights[k]) + self._log_multivariate_gaussian(X[i],self.means[k],cov)) # type: ignore
             
             # numerical stability 
             max_log=np.max(log_probs)
@@ -140,12 +145,20 @@ class GMM:
         #     covariances[k] = cov_k  # store for component k
         
         # Vectorized Form
-        diffs = X[np.newaxis, :, :] - self.means[:, np.newaxis, :]  # shape (K, N, D)
+        diffs = X[np.newaxis, :, :] - self.means[:, np.newaxis, :]  # type: ignore # shape (K, N, D)
         resp_reshaped = responsibilities.T[:, :, np.newaxis]  # shape (K, N, 1)
         weighted_diffs = diffs * resp_reshaped                 # shape (K, N, D)
         for k in range(K):
-            covariances[k] = weighted_diffs[k].T @ diffs[k] / N_k[k] + self.reg_covar * np.eye(D)
-        return covariances
+            covariances[k] = weighted_diffs[k].T @ diffs[k] / N_k[k] + self.reg_covar * np.eye(n_features)
+        
+        if self.cov_type == CovarianceType.TIED:
+            return covariances.mean(axis=0)  # average across components
+        elif self.cov_type == CovarianceType.DIAGONAL:
+            return np.array([np.diag(np.diag(cov)) for cov in covariances])
+        elif self.cov_type == CovarianceType.SPHERICAL:
+            return np.array([np.mean(np.diag(cov)) for cov in covariances])
+        else:  # FULL
+            return covariances
     
     def _compute_log_likelihood(self, X):
         n_samples = X.shape[0]
@@ -153,11 +166,29 @@ class GMM:
         for i in range(n_samples):
             tmp = 0
             for k in range(self.n_components):
-                tmp += self.weights[k] * self._multivariate_gaussian(X[i], self.means[k], self.covariances[k])
+                if self.cov_type == CovarianceType.TIED:
+                    cov = self.covariances
+                else:
+                    cov = self.covariances[k] # type: ignore
+                tmp += self.weights[k] * self._multivariate_gaussian(X[i], self.means[k],cov) # type: ignore
             log_likelihood += np.log(tmp)
         return log_likelihood
 
     def fit(self,X):
         self._init_params(X)
+        for iter in range(self.max_iter):
+            responsibilities=self._e_step(X)
+            self._m_step(X,responsibilities)
+            log_likelihood=self._compute_log_likelihood(X)
+            self.log_likelihoods.append(log_likelihood)
+            
+            if iter>0 and abs(self.log_likelihoods[-1]-self.log_likelihoods[-2] )< self.tol:
+                print(f"Converged at iteration {iter}")
+                break
+            
     def predict(self,X):
-        ...
+        responsibilities=self._e_step(X)
+        return np.argmax(responsibilities,axis=1)
+    
+    def predict_proba(self, X):
+        return self._e_step(X)
