@@ -21,14 +21,24 @@ class NumpyKMeans:
         rng = np.random.RandomState(self.random_state)
         
         if self.init == 'k-means++':
-         centers = X[rng.choice(n_samples, 1, replace=False)]
+          # Pick first center randomly
+            centers = X[rng.choice(n_samples, 1, replace=False)]
     
-         for _ in range(1, self.n_clusters):
-        # Compute distance from each point to nearest existing center
-           dist_sq = np.min(np.array([np.sum((X - c)**2, axis=1) for c in centers]), axis=0)
-           probs = dist_sq / np.sum(dist_sq)
-           next_center_idx = rng.choice(n_samples, p=probs)
-           centers = np.vstack([centers, X[next_center_idx]])
+            for _ in range(1, self.n_clusters):
+              # Compute squared distances from each point to nearest existing center
+              dist_sq = np.min(np.array([np.sum((X - c)**2, axis=1) for c in centers]), axis=0)
+        
+                # Handle rare case where all distances are zero
+            if np.sum(dist_sq) == 0:
+                 # pick random remaining point
+                remaining_indices = [i for i in range(n_samples) if not any(np.all(X[i] == center) for center in centers)]
+                next_center_idx = rng.choice(remaining_indices)
+            else:
+                probs = dist_sq / np.sum(dist_sq)
+                next_center_idx = rng.choice(n_samples, p=probs)
+        
+            centers = np.vstack([centers, X[next_center_idx]])
+
 
                 
         elif self.init == 'random':
