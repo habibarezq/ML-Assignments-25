@@ -15,14 +15,14 @@ class NumpyKMeans:
         self.inertia_history_ = None
     
     def _initialize_centers(self, X):
-    n_samples, n_features = X.shape
-    rng = np.random.RandomState(self.random_state)
+        n_samples, n_features = X.shape
+        rng = np.random.RandomState(self.random_state)
 
-    if self.init == 'k-means++':
+        if self.init == 'k-means++':
         # Pick first center randomly
-        centers = X[rng.choice(n_samples, 1, replace=False)]
+         centers = X[rng.choice(n_samples, 1, replace=False)]
 
-        for _ in range(1, self.n_clusters):
+         for _ in range(1, self.n_clusters):
             # Compute squared distance from each point to nearest existing center
             dist_sq = np.min(np.array([np.sum((X - c)**2, axis=1) for c in centers]), axis=0)
 
@@ -41,11 +41,11 @@ class NumpyKMeans:
 
             centers = np.vstack([centers, X[next_center_idx]])
 
-    elif self.init == 'random':
-        idx = rng.permutation(n_samples)[:self.n_clusters]
-        centers = X[idx]
+        elif self.init == 'random':
+         idx = rng.permutation(n_samples)[:self.n_clusters]
+         centers = X[idx]
 
-    return centers
+        return centers
 
     
     def fit(self, X):
