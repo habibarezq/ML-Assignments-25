@@ -42,7 +42,7 @@ class NumpyKMeans:
     def _initialize_centers(self, X):
         n_samples, n_features = X.shape
         rng = np.random.RandomState(self.random_state)
-        
+
         if self.init == 'k-means++':
             # Start with random center
             centers = X[rng.choice(n_samples, 1, replace=False)]
