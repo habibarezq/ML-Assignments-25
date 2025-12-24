@@ -14,31 +14,61 @@ class NumpyKMeans:
         self.n_iter_ = None
         self.inertia_history_ = None
     
-    def _initialize_centers(self, X):
-        # Initialize cluster centers using K-Means++ or random
+    # def _initialize_centers(self, X):
+    #     # Initialize cluster centers using K-Means++ or random
 
+    #     n_samples, n_features = X.shape
+    #     rng = np.random.RandomState(self.random_state)
+        
+    #     if self.init == 'k-means++':
+    #         # K-Means++ initialization
+    #         centers = X[rng.choice(n_samples, 1, replace=False)] # pick a random point
+            
+    #         for _ in range(1, self.n_clusters):
+    #             # Compute distances to existing centers
+    #             dists = np.array([np.min(np.sum((X - center)**2, axis=1)) for center in centers])
+    #             # Select next center with probability proportional to squared distance
+    #             probs = dists.ravel() / np.sum(dists)
+    #             next_center_idx = rng.choice(n_samples, p=probs)
+    #             centers = np.vstack([centers, X[next_center_idx]])
+                
+    #     elif self.init == 'random':
+    #         # Random initialization
+    #         idx = rng.permutation(n_samples)[:self.n_clusters]
+    #         centers = X[idx]
+        
+    #     return centers
+
+    def _initialize_centers(self, X):
         n_samples, n_features = X.shape
         rng = np.random.RandomState(self.random_state)
         
         if self.init == 'k-means++':
-            # K-Means++ initialization
+            # Start with random center
             centers = X[rng.choice(n_samples, 1, replace=False)]
             
             for _ in range(1, self.n_clusters):
-                # Compute distances to existing centers
-                dists = np.array([np.min(np.sum((X - center)**2, axis=1)) 
-                                for center in centers])
-                # Select next center with probability proportional to squared distance
-                probs = dists.ravel() / np.sum(dists)
-                next_center_idx = rng.choice(n_samples, p=probs)
+                # Efficient distance computation: min dist to ANY existing center
+                # Shape: (n_samples, n_centers) -> min across centers
+                dists_to_centers = np.sum((X[:, np.newaxis, :] - centers[np.newaxis, :, :])**2, axis=2)
+                min_dists = np.min(dists_to_centers, axis=1)  # (n_samples,)
+                
+                # Handle zero distances (all points at existing centers)
+                if np.sum(min_dists) == 0:
+                    # Fallback: random selection
+                    next_center_idx = rng.choice(n_samples)
+                else:
+                    probs = min_dists / np.sum(min_dists)
+                    next_center_idx = rng.choice(n_samples, p=probs)
+                
                 centers = np.vstack([centers, X[next_center_idx]])
                 
         elif self.init == 'random':
-            # Random initialization
             idx = rng.permutation(n_samples)[:self.n_clusters]
             centers = X[idx]
         
         return centers
+
     
     def fit(self, X):
         # Fit K-Means clustering to data
@@ -98,3 +128,5 @@ class NumpyKMeans:
         X = np.array(X, dtype=float)
         return np.array([np.sum((X - center)**2, axis=1) 
                         for center in self.cluster_centers_]).T
+    
+   
