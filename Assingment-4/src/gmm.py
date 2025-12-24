@@ -161,14 +161,18 @@ class GMM:
         n_samples = X.shape[0]
         log_likelihood = 0
         for i in range(n_samples):
-            tmp = 0
+            log_probs = np.zeros(self.n_components)
             for k in range(self.n_components):
                 if self.cov_type == CovarianceType.TIED:
                     cov = self.covariances
                 else:
                     cov = self.covariances[k] # type: ignore
-                tmp += self.weights[k] * self._multivariate_gaussian(X[i], self.means[k],cov) # type: ignore
-            log_likelihood += np.log(tmp)
+                # log P(x_i | z_i=k, θ) + log P(z_i=k)
+                log_probs[k] = (np.log(self.weights[k]) +  # type: ignore
+                           self._log_multivariate_gaussian(X[i], self.means[k], cov))  # type: ignore
+        
+            max_log_prob = np.max(log_probs)
+            log_likelihood += max_log_prob + np.log(np.sum(np.exp(log_probs - max_log_prob)))
         return log_likelihood
 
     def fit(self,X):
