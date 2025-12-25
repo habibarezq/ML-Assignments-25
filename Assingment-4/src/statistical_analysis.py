@@ -24,10 +24,7 @@ def create_comparison_table(pca_res, ae_res, kmeans_res, gmm_res):
 def paired_tests(metric_pca, metric_ae):
     t_stat, p_val = ttest_rel(metric_pca, metric_ae)
     return t_stat, p_val
-t, p = paired_tests(
-    [kmeans_res["PCA"][b] for b in bottleneck_sizes],
-    [kmeans_res["AE"][b] for b in bottleneck_sizes]
-)
+
 print("Paired t-test (KMeans): p-value =", p)
 def complexity_summary():
     print("""
