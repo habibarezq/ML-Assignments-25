@@ -26,6 +26,7 @@ def paired_tests(metric_pca, metric_ae):
     return t_stat, p_val
 
 
+
 def complexity_summary():
     print("""
     PCA:
