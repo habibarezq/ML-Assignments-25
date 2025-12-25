@@ -45,6 +45,6 @@ def evaluate_autoencoder(X, bottleneck_sizes, epochs=50):
         
         results[b] = {
             "mse": reconstruction_mse(X, X_rec),
-            "loss_curve": ae.loss_history
+            # "loss_curve": ae.loss_history
         }
     return results
