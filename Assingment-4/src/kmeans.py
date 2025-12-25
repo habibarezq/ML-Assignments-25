@@ -14,7 +14,7 @@ class NumpyKMeans:
         self.inertia_history_ = None
     
     def _initialize_centers(self, X):
-        n_samples, n_features = X.shape
+        n_samples, n_features = X.shape 
         rng = np.random.RandomState(self.random_state)
 
         if self.init == 'k-means++':
@@ -62,10 +62,12 @@ class NumpyKMeans:
             
             self.cluster_centers_ = new_centers
             
-            dists_to_new_centers = np.sum((X[:, np.newaxis, :] - self.cluster_centers_[np.newaxis, :, :])**2, axis=2)
-            inertia = np.sum(dists_to_centers[np.arange(len(self.labels_)), self.labels_])
+            dists_to_new_centers = np.sum(
+                (X[:, np.newaxis, :] - self.cluster_centers_[np.newaxis, :, :])**2,
+                axis=2)
+            inertia = np.sum(dists_to_new_centers[np.arange(len(self.labels_)), self.labels_])
             inertia_history.append(inertia)
-            
+
             #  Convergence checks
             if labels_old is not None and np.all(labels_old == self.labels_):
                 break
