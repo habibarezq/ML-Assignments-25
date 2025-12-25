@@ -9,7 +9,7 @@ class CovarianceType(Enum):
     SPHERICAL="spherical"
 
 class GMM:
-    def __init__(self,n_components,cov_type:CovarianceType,tol,max_iter=50,reg_covar=1e-6):
+    def __init__(self,n_components,cov_type:CovarianceType,tol=1e-3,max_iter=50,reg_covar=1e-6):
         self.n_components=n_components
         self.cov_type=cov_type # FULL, TIED, DIAGONAL, SPHERICAL
         self.tol=tol

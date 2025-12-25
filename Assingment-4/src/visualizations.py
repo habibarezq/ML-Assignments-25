@@ -5,6 +5,10 @@ from sklearn.metrics import silhouette_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import ttest_rel
 import time
+from kmeans import NumpyKMeans
+from gmm import GMM, CovarianceType
+
+
 def plot_2d_clusters(Z, labels, title):
     plt.figure(figsize=(5,4))
     plt.scatter(Z[:,0], Z[:,1], c=labels, cmap='tab10', s=10)

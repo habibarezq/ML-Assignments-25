@@ -5,6 +5,9 @@ from sklearn.metrics import silhouette_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import ttest_rel
 import time
+from PCA import NumpyPCA
+from autoencoder import Autoencoder
+
 def reconstruction_mse(X, X_hat):
     return np.mean((X - X_hat) ** 2)
 def evaluate_pca(X, bottleneck_sizes):
@@ -17,10 +20,11 @@ def evaluate_pca(X, bottleneck_sizes):
         Z = pca.transform(X)
         X_rec = pca.inverse_transform(Z)
         
-        results[b] = {
-            "mse": reconstruction_mse(X, X_rec),
-            "explained_variance": np.sum(pca.explained_variance_ratio_)
-        }
+        if pca.explained_variance_ratio_ is not None:
+            results[b] = {
+                "mse": reconstruction_mse(X, X_rec),
+                "explained_variance": np.sum(pca.explained_variance_ratio_)
+            }
     return results
 def evaluate_autoencoder(X, bottleneck_sizes, epochs=50):
     results = {}
